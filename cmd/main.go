@@ -3,6 +3,7 @@ package main
 import (
 	"data_importer/internal/config"
 	"data_importer/internal/handler"
+	"data_importer/internal/middlewares"
 	"data_importer/internal/repository"
 	"data_importer/internal/services"
 	"log"
@@ -20,6 +21,8 @@ func main() {
 	importService := services.NewImportService(userRepo)
 	userHandler := handler.NewUserHandler(userRepo)
 
+	authService := services.NewAuthService(userRepo)
+	authHandler := handler.NewAuthHandler(authService)
 	// import data
 	err := importService.ImportExcelData("./data/data.xlsx")
 	if err != nil {
@@ -28,11 +31,15 @@ func main() {
 
 	router := gin.Default()
 
-	router.GET("/users", userHandler.GetAllUsers)
-	router.GET("/users/:id", userHandler.GetUser)
-	router.POST("/users", userHandler.CreateUser)
-	router.PUT("/users/:id", userHandler.UpdateUser)
-	router.DELETE("/users/:id", userHandler.DeleteUser)
+	// auth routes
+	router.POST("/signup", authHandler.Signup)
+	router.POST("/login", authHandler.Login)
+	userAuth := router.Group("/users", middlewares.Authorization())
+	userAuth.GET("/", userHandler.GetAllUsers)
+	userAuth.GET("/:id", userHandler.GetUser)
+	userAuth.POST("/", userHandler.CreateUser)
+	userAuth.PUT("/:id", userHandler.UpdateUser)
+	userAuth.DELETE("/:id", userHandler.DeleteUser)
 	router.Static("/assets", "./frontend/dist/assets")
 	router.StaticFile("/favicon.ico", "./frontend/dist/favicon.ico")
 

@@ -65,7 +65,10 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	}
 
 	user.ID = int(id)
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "User Created Successfully",
+		"user":    user,
+	})
 }
 
 func (h *UserHandler) UpdateUser(c *gin.Context) {
@@ -93,7 +96,10 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User Updated Succeesully",
+		"user":    user,
+	})
 }
 
 func (h *UserHandler) DeleteUser(c *gin.Context) {

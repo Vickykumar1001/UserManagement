@@ -4,15 +4,17 @@ import (
 	"data_importer/internal/models"
 	"database/sql"
 	"errors"
+	"fmt"
 )
 
 const (
-	InsertStmt  = "INSERT INTO users (name, email, address, phone) VALUES (?, ?, ?, ?)"
-	GetByIdStmt = "SELECT id, name, email, address, phone FROM users WHERE id = ?"
-	GetStmt     = "SELECT id, name, email, address, phone FROM users"
-	UpdateStmt  = "UPDATE users SET name = ?, email = ?, address = ?, phone = ? WHERE id = ?"
-	DeleteStmt  = "DELETE FROM users WHERE id = ?"
-	ErrNotFound = "record not found"
+	InsertStmt     = "INSERT INTO users (name, email, address, phone, password, role) VALUES (?, ?, ?, ?, ?, ?)"
+	GetByIdStmt    = "SELECT id, name, email, address, phone, role FROM users WHERE id = ?"
+	GetByEmailStmt = "SELECT id, name, email, address, phone, password, role FROM users WHERE email = ?"
+	GetStmt        = "SELECT id, name, email, address, phone, role FROM users"
+	UpdateStmt     = "UPDATE users SET name = ?, email = ?, address = ?, phone = ?, role = ? WHERE id = ?"
+	DeleteStmt     = "DELETE FROM users WHERE id = ?"
+	ErrNotFound    = "record not found"
 )
 
 type UserRepository struct {
@@ -30,8 +32,9 @@ func (repo *UserRepository) CreateUser(user *models.User) (int64, error) {
 		return 0, err
 	}
 	defer stmt.Close()
-
-	res, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone)
+	fmt.Println(&user)
+	fmt.Println(user.Password)
+	res, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone, user.Password, user.Role)
 	if err != nil {
 		return 0, err
 	}
@@ -58,7 +61,9 @@ func (repo *UserRepository) BulkCreateUsers(users []models.User) error {
 	defer stmt.Close()
 
 	for _, user := range users {
-		_, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone)
+		fmt.Println(user)
+		fmt.Println(user.Password)
+		_, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone, user.Password, user.Role)
 		if err != nil {
 			tx.Rollback()
 			return err
@@ -71,7 +76,19 @@ func (repo *UserRepository) BulkCreateUsers(users []models.User) error {
 func (repo *UserRepository) GetUserByID(id int) (*models.User, error) {
 	user := &models.User{}
 	err := repo.DB.QueryRow(GetByIdStmt, id).
-		Scan(&user.ID, &user.Name, &user.Email, &user.Address, &user.Phone)
+		Scan(&user.ID, &user.Name, &user.Email, &user.Address, &user.Phone, &user.Role)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.New(ErrNotFound)
+		}
+		return nil, err
+	}
+	return user, nil
+}
+func (repo *UserRepository) GetUserByEmail(email string) (*models.User, error) {
+	user := &models.User{}
+	err := repo.DB.QueryRow(GetByEmailStmt, email).
+		Scan(&user.ID, &user.Name, &user.Email, &user.Address, &user.Phone, &user.Password, &user.Role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, errors.New(ErrNotFound)
@@ -91,7 +108,7 @@ func (repo *UserRepository) GetAllUsers() ([]models.User, error) {
 	var users []models.User
 	for rows.Next() {
 		user := models.User{}
-		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Address, &user.Phone)
+		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Address, &user.Phone, &user.Role)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +129,7 @@ func (repo *UserRepository) UpdateUser(user *models.User) error {
 	}
 	defer stmt.Close()
 
-	res, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone, user.ID)
+	res, err := stmt.Exec(user.Name, user.Email, user.Address, user.Phone, user.Role, user.ID)
 	if err != nil {
 		return err
 	}

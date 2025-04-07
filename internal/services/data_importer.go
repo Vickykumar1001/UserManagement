@@ -48,10 +48,12 @@ func (s *ImportService) ImportExcelData(filepath string) error {
 	for _, row := range dataRows {
 
 		user := models.User{
-			Name:    row[0],
-			Address: row[1],
-			Email:   row[2],
-			Phone:   row[3],
+			Name:     row[0],
+			Address:  row[1],
+			Email:    row[2],
+			Phone:    row[3],
+			Password: row[4],
+			Role:     row[5],
 		}
 		users = append(users, user)
 	}

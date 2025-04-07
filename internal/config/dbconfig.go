@@ -23,9 +23,11 @@ func InitializeDatabase() {
 	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			name TEXT,
-			email TEXT,
+			email TEXT UNIQUE,
 			phone TEXT,
-			address TEXT);`)
+			address TEXT,
+			password TEXT,
+			role TEXT);`)
 	if err != nil {
 		log.Fatal(err)
 	}

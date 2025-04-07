@@ -28,7 +28,6 @@ const UserManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortConfig, setSortConfig] = useState({ key: 'id', direction: 'ascending' });
 
-    // Fetch all users
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -47,7 +46,6 @@ const UserManagement = () => {
         fetchUsers();
     }, []);
 
-    // Handle delete user
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
@@ -60,7 +58,6 @@ const UserManagement = () => {
         }
     };
 
-    // Handle starting edit
     const handleEdit = (user) => {
         setEditingUser(user.id);
         setFormData({
@@ -71,7 +68,6 @@ const UserManagement = () => {
         });
     };
 
-    // Handle form input changes
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -80,7 +76,6 @@ const UserManagement = () => {
         }));
     };
 
-    // Handle update submit
     const handleUpdate = async () => {
         try {
             await axios.put(`/users/${editingUser}`, formData);
@@ -94,7 +89,6 @@ const UserManagement = () => {
         }
     };
 
-    // Handle create new user
     const handleCreate = async () => {
         try {
             const response = await axios.post('/users', formData);
@@ -112,7 +106,6 @@ const UserManagement = () => {
         }
     };
 
-    // Handle sorting
     const requestSort = (key) => {
         let direction = 'ascending';
         if (sortConfig.key === key && sortConfig.direction === 'ascending') {
@@ -121,7 +114,6 @@ const UserManagement = () => {
         setSortConfig({ key, direction });
     };
 
-    // Get sorted, filtered users
     const getSortedUsers = () => {
         const filtered = users.filter(user =>
             user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,7 +133,6 @@ const UserManagement = () => {
         });
     };
 
-    // Get sort indicator
     const getSortIndicator = (key) => {
         if (sortConfig.key === key) {
             return sortConfig.direction === 'ascending' ?

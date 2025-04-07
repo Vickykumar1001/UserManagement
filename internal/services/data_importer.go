@@ -10,10 +10,10 @@ import (
 )
 
 type ImportService struct {
-	userRepo *repository.UserRepository
+	userRepo repository.UserRepo
 }
 
-func NewImportService(userRepo *repository.UserRepository) *ImportService {
+func NewImportService(userRepo repository.UserRepo) *ImportService {
 	return &ImportService{
 		userRepo: userRepo,
 	}

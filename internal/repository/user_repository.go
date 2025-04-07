@@ -6,7 +6,6 @@ import (
 	"errors"
 )
 
-// Error constants
 const (
 	InsertStmt  = "INSERT INTO users (name, email, address, phone) VALUES (?, ?, ?, ?)"
 	GetByIdStmt = "SELECT id, name, email, address, phone FROM users WHERE id = ?"
@@ -20,7 +19,7 @@ type UserRepository struct {
 	DB *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
+func NewUserRepository(db *sql.DB) UserRepo {
 	return &UserRepository{DB: db}
 }
 

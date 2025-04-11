@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import customFetch from './utils/axios.js'
 import {
     ChevronDown,
     ChevronUp,
@@ -12,6 +12,7 @@ import {
     RefreshCw
 } from 'lucide-react';
 import './user_management.css';
+import { toast } from 'react-toastify';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -22,7 +23,8 @@ const UserManagement = () => {
         name: '',
         email: '',
         address: '',
-        phone: ''
+        phone: '',
+        role: 'User'
     });
     const [isCreating, setIsCreating] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,11 +33,12 @@ const UserManagement = () => {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await axios.get('/users');
+            const response = await customFetch.get('/users');
             setUsers(response.data);
             setError(null);
         } catch (err) {
-            setError('Failed to fetch users. Please try again later.');
+            setError(err?.response?.data?.error || 'Failed to fetch users. Please try again later.');
+            toast.error(err?.response?.data?.error || 'Failed to fetch users. Please try again later.')
             console.error('Error fetching users:', err);
         } finally {
             setLoading(false);
@@ -49,11 +52,13 @@ const UserManagement = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
-                await axios.delete(`/users/${id}`);
+                const response = await customFetch.delete(`/users/${id}`);
                 setUsers(users.filter(user => user.id !== id));
+                toast.success(response?.data?.message || 'User Deleted')
             } catch (err) {
-                setError('Failed to delete user. Please try again.');
+                setError(err?.response?.data?.error || 'Failed to delete user. Please try again.');
                 console.error('Error deleting user:', err);
+                toast.error(err?.response?.data?.error || 'Failed to delete user. Please try again.')
             }
         }
     };
@@ -64,7 +69,8 @@ const UserManagement = () => {
             name: user.name,
             email: user.email,
             address: user.address,
-            phone: user.phone
+            phone: user.phone,
+            role: user.role || 'User'
         });
     };
 
@@ -78,31 +84,36 @@ const UserManagement = () => {
 
     const handleUpdate = async () => {
         try {
-            await axios.put(`/users/${editingUser}`, formData);
+            const response = await customFetch.put(`/users/${editingUser}`, formData);
             setUsers(users.map(user =>
                 user.id === editingUser ? { ...user, ...formData } : user
             ));
             setEditingUser(null);
+            toast.success(response?.data?.message || 'User Updated')
         } catch (err) {
-            setError('Failed to update user. Please try again.');
+            setError(err?.response?.data?.error || 'Failed to update user. Please try again.');
             console.error('Error updating user:', err);
+            toast.error(err?.response?.data?.error || 'Failed to update user. Please try again.')
         }
     };
 
     const handleCreate = async () => {
         try {
-            const response = await axios.post('/users', formData);
-            setUsers([...users, response.data]);
+            const response = await customFetch.post('/users', formData);
+            setUsers([...users, response.data.user]);
             setIsCreating(false);
             setFormData({
                 name: '',
                 email: '',
                 address: '',
-                phone: ''
+                phone: '',
+                role: 'User'
             });
+            toast.success(response?.data?.message || 'User Created')
         } catch (err) {
-            setError('Failed to create user. Please try again.');
+            setError(err?.response?.data?.error || 'Failed to create user. Please try again.');
             console.error('Error creating user:', err);
+            toast.error(err?.response?.data?.error || 'Failed to create user. Please try again.')
         }
     };
 
@@ -116,10 +127,10 @@ const UserManagement = () => {
 
     const getSortedUsers = () => {
         const filtered = users.filter(user =>
-            user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.phone.includes(searchTerm)
+            user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (user.phone && user.phone.includes(searchTerm))
         );
 
         return [...filtered].sort((a, b) => {
@@ -155,7 +166,8 @@ const UserManagement = () => {
                                     name: '',
                                     email: '',
                                     address: '',
-                                    phone: ''
+                                    phone: '',
+                                    role: 'User'
                                 });
                             }}
                             className="button button-white"
@@ -198,8 +210,9 @@ const UserManagement = () => {
                         <h2 className="form-title">Add New User</h2>
                         <div className="form-grid">
                             <div className="form-group">
-                                <label className="form-label">Name</label>
+                                <label className="form-label" htmlFor="create-name">Name</label>
                                 <input
+                                    id="create-name"
                                     type="text"
                                     name="name"
                                     value={formData.name}
@@ -208,8 +221,9 @@ const UserManagement = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Email</label>
+                                <label className="form-label" htmlFor="create-email">Email</label>
                                 <input
+                                    id="create-email"
                                     type="email"
                                     name="email"
                                     value={formData.email}
@@ -218,8 +232,9 @@ const UserManagement = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Address</label>
+                                <label className="form-label" htmlFor="create-address">Address</label>
                                 <input
+                                    id="create-address"
                                     type="text"
                                     name="address"
                                     value={formData.address}
@@ -228,14 +243,29 @@ const UserManagement = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label className="form-label">Phone</label>
+                                <label className="form-label" htmlFor="create-phone">Phone</label>
                                 <input
+                                    id="create-phone"
                                     type="text"
                                     name="phone"
                                     value={formData.phone}
                                     onChange={handleInputChange}
                                     className="form-input"
                                 />
+                            </div>
+                            <div className="form-group">
+                                <label className="form-label" htmlFor="create-role">Role</label>
+                                <select
+                                    id="create-role"
+                                    name="role"
+                                    value={formData.role}
+                                    onChange={handleInputChange}
+                                    className="dropdown-select form-input"
+                                >
+                                    <option value="User">User</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="SuperAdmin">Super Admin</option>
+                                </select>
                             </div>
                         </div>
                         <div className="form-actions">
@@ -269,6 +299,7 @@ const UserManagement = () => {
                                 <th onClick={() => requestSort('email')}>
                                     Email {getSortIndicator('email')}
                                 </th>
+                                <th onClick={() => requestSort('role')}>Role {getSortIndicator('role')}</th>
                                 <th>Address</th>
                                 <th>Phone</th>
                                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -277,7 +308,7 @@ const UserManagement = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="6">
+                                    <td colSpan="7">
                                         <div className="loading-container">
                                             <div className="spinner"></div>
                                             <span>Loading...</span>
@@ -286,7 +317,7 @@ const UserManagement = () => {
                                 </tr>
                             ) : getSortedUsers().length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" className="empty-message">
+                                    <td colSpan="7" className="empty-message">
                                         No users found
                                     </td>
                                 </tr>
@@ -320,6 +351,22 @@ const UserManagement = () => {
                                                 />
                                             ) : (
                                                 user.email
+                                            )}
+                                        </td>
+                                        <td className="text-primary">
+                                            {editingUser === user.id ? (
+                                                <select
+                                                    name="role"
+                                                    value={formData.role}
+                                                    onChange={handleInputChange}
+                                                    className="dropdown-select form-input"
+                                                >
+                                                    <option value="User">User</option>
+                                                    <option value="Admin">Admin</option>
+                                                    <option value="SuperAdmin">Super Admin</option>
+                                                </select>
+                                            ) : (
+                                                user.role
                                             )}
                                         </td>
                                         <td className="text-secondary">

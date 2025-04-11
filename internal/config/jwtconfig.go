@@ -12,8 +12,8 @@ var SecretKey = "mysecretkey"
 func GenerateJWT(user *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"ID":    user.ID,
-		"Email": user.Email,
-		"Role":  user.Role,
+		"email": user.Email,
+		"role":  user.Role,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	}
 
